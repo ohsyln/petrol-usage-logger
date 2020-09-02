@@ -46,8 +46,8 @@ sudo apt-get install python3-pip
 Clone to your local directory:
 
 ```
-git clone https://github.com/ohsyln/petrol-usage-log
-cd petrol-usage-log
+git clone https://github.com/ohsyln/petrol-usage-logger
+cd petrol-usage-logger
 ```
 
 Create virtual environment, and activate:
