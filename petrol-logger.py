@@ -17,6 +17,12 @@ class SheetsAPI():
     creds = ServiceAccountCredentials.from_json_keyfile_name(GAPI_CREDENTIALS, scope)
     client = gspread.authorize(creds)
     self.sheet = client.open('Finance').worksheet("PetrolSF")
+    
+  # Returns previous mileage (most recent mileage in GSheet logs)
+  def get_prev_mileage(self):
+    last_row = self.next_available_row() - 1
+    mileage = self.sheet.cell(last_row, 2).value
+    return int(mileage)
 
   # Returns next available empty row
   def next_available_row(self):
@@ -92,10 +98,13 @@ API_CHAT_ID = '<YOUR TELEGRAM BOT CHAT ID HERE>'
 API_TEXT = '[{}] Please enter your mileage for petrol pump:'
 class TelegramAPI():
   def __init__(self):
-    pass
+    self.prev_mileage = 0
+    
   # Sends prompter to user for mileage via Telegram bot
   # Returns (int) mileage
-  def prompt_for_mileage(self):
+  def prompt_for_mileage(self, prev_mileage):
+    self.prev_mileage = prev_mileage
+    
     not_success = 1
     URL = API_PREFIX + API_KEY + API_SEND
     TEXT = API_TEXT.format(logger.now())
@@ -126,21 +135,9 @@ class TelegramAPI():
           not_success = 0
         else:
           print("Waiting for user to enter mileage..")
-          time.sleep(60)
+          time.sleep(5)
 
     return mileage
-
-  # Helper function to update latest mileage
-  def update_mileage(self, m):
-    f = open('mileage.txt', 'w')
-    f.write(str(m))
-    f.close()
-  # Helper function to return (str) mileage for comparison
-  def get_mileage(self):
-    f = open('mileage.txt','r')
-    mileage = f.read()
-    f.close()
-    return int(mileage)
 
   # Parse JSON response from user
   # Returns none if user has not sent their mileage via Telegram,
@@ -154,9 +151,8 @@ class TelegramAPI():
       new_mileage = int(msg_list[-1]["message"]["text"])
     except:
       raise ParsingException("can't parse mileage from user: {}".format(msg_list[-1])) 
-    if new_mileage > self.get_mileage():
+    if new_mileage > self.prev_mileage:
       # User has provided an increased mileage -> re-fuelled
-      self.update_mileage(new_mileage)
       return new_mileage
     return None
 
@@ -183,9 +179,13 @@ def main():
       log.plog("{} (sender: {})".format(e, sender))
       return
 
-    # Uses Telegram bot to prompt user to enter current mileage
     try:
-      mileage = telegram.prompt_for_mileage()
+      # Uses Gspread to get previous mileage
+      sheets_api = SheetsAPI()
+      prev_mileage = sheets_api.get_prev_mileage()
+      
+      # Uses Telegram bot to prompt user for current mileage
+      mileage = telegram.prompt_for_mileage(prev_mileage)
     except ParsingException as e:
       print(e)
       return
