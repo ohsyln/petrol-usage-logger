@@ -162,7 +162,6 @@ class TelegramAPI():
 
 ################## MAIN ####################33
 def main():
-  sheets_api = SheetsAPI()
   inbox = Inbox()
   parser = Parser()
   telegram = TelegramAPI()
@@ -192,6 +191,7 @@ def main():
       return
 
     # Uses Gspread to access Google Sheets API to update cells
+    sheets_api = SheetsAPI()
     sheets_api.update_row(ddmmyy, mileage, refilled, costperlitre)
     log.plog("update_row: {} {} {} {}".format(ddmmyy, mileage, refilled, costperlitre))
 
