@@ -9,9 +9,14 @@ from oauth2client.service_account import ServiceAccountCredentials
 log = logger.Log(__file__)
 
 ############ GSPREAD ############
+GAPI_CREDENTIALS = "account_key.json"
 class SheetsAPI():
-  def __init__(self, sheet):
-    self.sheet = sheet
+  def __init__(self):
+    # Use Google Sheets API's credentials.json to access services
+    scope = ['https://spreadsheets.google.com/feeds','https://www.googleapis.com/auth/drive']
+    creds = ServiceAccountCredentials.from_json_keyfile_name(GAPI_CREDENTIALS, scope)
+    client = gspread.authorize(creds)
+    self.sheet = client.open('Finance').worksheet("PetrolSF")
 
   # Returns next available empty row
   def next_available_row(self):
@@ -157,13 +162,7 @@ class TelegramAPI():
 
 ################## MAIN ####################33
 def main():
-  # Use Google Sheets API's credentials.json to access services
-  scope = ['https://spreadsheets.google.com/feeds','https://www.googleapis.com/auth/drive']
-  creds = ServiceAccountCredentials.from_json_keyfile_name('account_key.json', scope)
-  client = gspread.authorize(creds)
-  sheet = client.open('Finance').worksheet("PetrolSF")
-
-  sheets_api = SheetsAPI(sheet)
+  sheets_api = SheetsAPI()
   inbox = Inbox()
   parser = Parser()
   telegram = TelegramAPI()
