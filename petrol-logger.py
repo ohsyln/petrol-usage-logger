@@ -1,8 +1,10 @@
+from bs4 import BeautifulSoup
 import gspread
 import json
 import logger
 import requests
 import time
+import quopri
 from inbox import Inbox
 from oauth2client.service_account import ServiceAccountCredentials
 
@@ -53,8 +55,17 @@ class Parser():
   #   (float) refilled
   #   (float) costperlitre
   def extract_info(self, body):
-    main_body = self.get_text_between(body, "Volume:", "Amount")
-    datetime_text = self.get_text_between(body, "Date & Time:", "Station:")
+    soup = BeautifulSoup(body, 'html.parser')
+    tds = soup.find_all('td')
+    for i, td in enumerate(tds):
+      try:
+        if "Transaction Date & Time:" in td.contents:
+          datetime_text = ''.join(tds[i+1].contents)
+        if "Volume:" in td.contents:
+          volume_text = ''.join(tds[i+1].contents)
+      except:
+        raise ParsingException("parsing error: can't find tds[i+1] time/volume info")
+        
     try:
       [transaction_date, transaction_time] = datetime_text.split(",")
       [yyyy, mm, dd] = transaction_date.split("-")
@@ -63,9 +74,9 @@ class Parser():
       raise ParsingException("parsing error: can't parse datetime")
 
     delim = "litre @"
-    if delim not in body:
+    if delim not in volume_text:
       raise ParsingException("parsing error: can't find '{}' delim".format(delim))
-    [refilled, costperlitre] = main_body.split(delim)
+    [refilled, costperlitre] = volume_text.split(delim)
     refilled = refilled.strip()
     costperlitre = costperlitre.strip()
     try:
@@ -75,19 +86,6 @@ class Parser():
       raise ParsingException("parsing error: can't convert values to float")
 
     return ddmmyy, refilled, costperlitre
-  # Helper function to get extract text between two specified keywords
-  # In: 
-  #   (string) body
-  #   (string) first keyword
-  #   (string) second keyword
-  # Returns: 
-  #   (string) text between the two keywords
-  def get_text_between(self, s, start, end):
-    s_i = s.find(start)
-    e_i = s.find(end)
-    if s_i == -1 or e_i == -1:
-      raise ParsingException("parsing error: can't find '{}' or '{}'".format(start, end))
-    return s[s_i + len(start): e_i].strip()
 
 ############ TELEGRAM BOT ############
 API_KEY = "<YOUR TELEGRAM BOT API KEY HERE>"
@@ -165,7 +163,12 @@ def main():
   # Async callback when email is received
   @inbox.collate
   def handle(to, sender, body):
-    str_body = body.decode("utf-8")
+    try:
+      str_body = quopri.decodestring(body)
+      str_body = str_body.decode("ascii", "ignore")
+    except Exception as e:
+      log.plog(e)
+      return
     # Caltex Singapore's receipt email body for CaltexGO
     if ("Thank You - Successful Payment (" not in str_body):
       # Ignore emails if conditions not met
