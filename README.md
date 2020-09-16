@@ -3,8 +3,9 @@ Got sick of manually updating my vehicle's petrol usage (litres refuelled, cost 
 
 Uses the following py packages:
 
-Uses  | Version |For
+Uses  | Version | Info
 ------------- | - | -------------
+beautifulsoup4 | 4.9.1 | HTML parser
 gspread |  3.6.0 | Python API for Google Sheets API v4
 inbox.py | 0.0.6 | Simple SMTP server (with hotfix [here](https://github.com/ohsyln/inbox.py/blob/master/inbox.py))
 oauth2client | 4.1.3 |  Google's OAuth2
@@ -59,7 +60,7 @@ python3 -m venv pyenv
 
 Install the required packages using pip3 into your virtual environment:
 ```
-pip3 install gspread oauth2client requests inbox.py
+pip3 install gspread oauth2client requests inbox.py beautifulsoup4
 ```
 
 ## Run script
