@@ -90,8 +90,8 @@ class Parser():
 ############ TELEGRAM BOT ############
 API_KEY = "<YOUR TELEGRAM BOT API KEY HERE>"
 API_PREFIX = 'https://api.telegram.org/bot'
-API_SEND = 'sendMessage'
-API_GET = 'getUpdates'
+API_SEND = '/sendMessage'
+API_GET = '/getUpdates'
 API_CHAT_ID = '<YOUR TELEGRAM BOT CHAT ID HERE>'
 API_TEXT = '[{}] Please enter your mileage for petrol pump:'
 class TelegramAPI():
@@ -111,7 +111,7 @@ class TelegramAPI():
       try:
         r = requests.get(url=URL, params=PARAMS)
       except requests.exceptions.RequestException as e:
-        log.plog("RequestException: {} (retry in 60s")
+        log.plog("RequestException: {} (retry in 60s)")
         time.sleep(60)
       else:
         # Successfully sent prompt to user
@@ -125,7 +125,7 @@ class TelegramAPI():
         r = requests.get(url=URL)
         mileage = self.parse_response(r)
       except requests.exceptions.RequestException as e:
-        log.plog("RequestException: {} (retry in 60s")
+        log.plog("RequestException: {} (retry in 60s)")
         time.sleep(60)
       else:
         # If mileage exists, we proceed
